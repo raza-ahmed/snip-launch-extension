@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+  <title>SnipLaunch</title>
+</head>
+<body>
+  <h2>SnipLaunch</h2>
+
+  <section class="section section-bookmarks">
+    <div class="section-head">
+      <h3 class="section-title">Domains</h3>
+      <div class="section-actions">
+        <button id="domainSelectAll" type="button" class="btn-small">All</button>
+        <button id="domainSelectNone" type="button" class="btn-small">None</button>
+      </div>
+    </div>
+    <p class="hint">Only checked domains are allowed when picking a random link. New domains stay selected until you turn them off.</p>
+    <div id="domainList" class="check-list"></div>
+  </section>
+
+  <section class="section section-bookmarks">
+    <div class="section-head">
+      <h3 class="section-title">Folders</h3>
+      <div class="section-actions">
+        <button id="folderSelectAll" type="button" class="btn-small">All</button>
+        <button id="folderSelectNone" type="button" class="btn-small">None</button>
+      </div>
+    </div>
+    <p class="hint">Only checked folders are searched. New folders stay selected until you turn them off.</p>
+    <div id="bookmarkFolderList" class="check-list"></div>
+  </section>
+
+  <div class="section section-open">
+    <label class="label" for="openCount">Number of tabs to open</label>
+    <input id="openCount" type="number" min="1" max="100" value="1" />
+  </div>
+
+  <button id="openRandom" type="button">Open random bookmarks</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
