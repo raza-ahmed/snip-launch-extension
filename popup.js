@@ -18,6 +18,10 @@ const folderSelectNone = document.getElementById("folderSelectNone");
 let cachedDomains = [];
 /** @type {{ id: string, title: string, path: string }[]} */
 let cachedFolders = [];
+/** @type {Record<string, number>} */
+let cachedDomainBookmarkCounts = {};
+/** @type {Record<string, number>} */
+let cachedFolderBookmarkCounts = {};
 
 function hostnameFromUrl(url) {
   try {
@@ -29,7 +33,7 @@ function hostnameFromUrl(url) {
   }
 }
 
-function walkBookmarkNodes(nodes, parentPath) {
+function walkBookmarkNodes(nodes, parentPath, ancestorFolderIds = []) {
   const urls = [];
   const folders = [];
   for (const n of nodes) {
@@ -39,14 +43,16 @@ function walkBookmarkNodes(nodes, parentPath) {
         title: n.title || "(untitled)",
         url: n.url,
         path: parentPath || "Bookmarks",
+        ancestorFolderIds,
       });
     } else if (n.children) {
       const segment = n.title || "(folder)";
       const path = parentPath ? `${parentPath} / ${segment}` : segment;
+      const nextAncestors = n.id !== "0" ? [...ancestorFolderIds, n.id] : ancestorFolderIds;
       if (n.id !== "0") {
         folders.push({ id: n.id, title: segment, path });
       }
-      const sub = walkBookmarkNodes(n.children, path);
+      const sub = walkBookmarkNodes(n.children, path, nextAncestors);
       urls.push(...sub.urls);
       folders.push(...sub.folders);
     }
@@ -61,6 +67,29 @@ function uniqueDomainsFromUrls(urls) {
     if (h) set.add(h);
   }
   return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+function buildDomainBookmarkCounts(urls) {
+  /** @type {Record<string, number>} */
+  const counts = {};
+  for (const u of urls) {
+    const host = hostnameFromUrl(u.url);
+    if (!host) continue;
+    counts[host] = (counts[host] || 0) + 1;
+  }
+  return counts;
+}
+
+function buildFolderBookmarkCounts(urls) {
+  /** @type {Record<string, number>} */
+  const counts = {};
+  for (const u of urls) {
+    const ancestors = Array.isArray(u.ancestorFolderIds) ? u.ancestorFolderIds : [];
+    for (const fid of ancestors) {
+      counts[fid] = (counts[fid] || 0) + 1;
+    }
+  }
+  return counts;
 }
 
 function loadBookmarkTree() {
@@ -94,7 +123,7 @@ function setStorageDeselected(key, deselected, callback) {
   chrome.storage.sync.set({ [key]: deselected }, callback);
 }
 
-function renderDomainRows(domains, domainDeselected) {
+function renderDomainRows(domains, domainDeselected, domainBookmarkCounts) {
   domainList.replaceChildren();
   const deselected = new Set(domainDeselected);
   if (!domains.length) {
@@ -125,14 +154,20 @@ function renderDomainRows(domains, domainDeselected) {
     });
     const label = document.createElement("label");
     label.htmlFor = cb.id;
+    const count = domainBookmarkCounts[d] || 0;
     label.textContent = d;
+    const countEl = document.createElement("span");
+    countEl.className = "item-count";
+    countEl.textContent = `(${count})`;
+    label.appendChild(document.createTextNode(" "));
+    label.appendChild(countEl);
     row.appendChild(cb);
     row.appendChild(label);
     domainList.appendChild(row);
   }
 }
 
-function renderFolderRows(folders, folderDeselected) {
+function renderFolderRows(folders, folderDeselected, folderBookmarkCounts) {
   bookmarkFolderList.replaceChildren();
   const deselected = new Set(folderDeselected);
   if (!folders.length) {
@@ -163,7 +198,13 @@ function renderFolderRows(folders, folderDeselected) {
     });
     const label = document.createElement("label");
     label.htmlFor = cb.id;
+    const count = folderBookmarkCounts[f.id] || 0;
     label.textContent = f.title;
+    const countEl = document.createElement("span");
+    countEl.className = "item-count";
+    countEl.textContent = `(${count})`;
+    label.appendChild(document.createTextNode(" "));
+    label.appendChild(countEl);
     const meta = document.createElement("span");
     meta.className = "meta";
     meta.textContent = f.path;
@@ -185,6 +226,8 @@ async function refreshBookmarks() {
     bookmarkCount.textContent = String(urls.length);
     cachedDomains = uniqueDomainsFromUrls(urls);
     cachedFolders = folders;
+    cachedDomainBookmarkCounts = buildDomainBookmarkCounts(urls);
+    cachedFolderBookmarkCounts = buildFolderBookmarkCounts(urls);
     domainCount.textContent = `(${cachedDomains.length})`;
     folderCount.textContent = `(${cachedFolders.length})`;
 
@@ -192,11 +235,11 @@ async function refreshBookmarks() {
 
     getStorageDeselected(STORAGE_DOMAIN_DESELECTED, cachedDomains, (d) => {
       domainDeselectedRef = d;
-      renderDomainRows(cachedDomains, domainDeselectedRef);
+      renderDomainRows(cachedDomains, domainDeselectedRef, cachedDomainBookmarkCounts);
     });
     getStorageDeselected(STORAGE_FOLDER_DESELECTED, folderIds, (d) => {
       folderDeselectedRef = d;
-      renderFolderRows(folders, folderDeselectedRef);
+      renderFolderRows(folders, folderDeselectedRef, cachedFolderBookmarkCounts);
     });
   } catch (e) {
     bookmarkCount.textContent = "0";
@@ -214,7 +257,7 @@ async function refreshBookmarks() {
 domainSelectAll.addEventListener("click", () => {
   setStorageDeselected(STORAGE_DOMAIN_DESELECTED, [], () => {
     domainDeselectedRef = [];
-    renderDomainRows(cachedDomains, domainDeselectedRef);
+    renderDomainRows(cachedDomains, domainDeselectedRef, cachedDomainBookmarkCounts);
   });
 });
 
@@ -222,14 +265,14 @@ domainSelectNone.addEventListener("click", () => {
   const all = [...cachedDomains];
   setStorageDeselected(STORAGE_DOMAIN_DESELECTED, all, () => {
     domainDeselectedRef = [...all];
-    renderDomainRows(cachedDomains, domainDeselectedRef);
+    renderDomainRows(cachedDomains, domainDeselectedRef, cachedDomainBookmarkCounts);
   });
 });
 
 folderSelectAll.addEventListener("click", () => {
   setStorageDeselected(STORAGE_FOLDER_DESELECTED, [], () => {
     folderDeselectedRef = [];
-    renderFolderRows(cachedFolders, folderDeselectedRef);
+    renderFolderRows(cachedFolders, folderDeselectedRef, cachedFolderBookmarkCounts);
   });
 });
 
@@ -237,7 +280,7 @@ folderSelectNone.addEventListener("click", () => {
   const all = cachedFolders.map((f) => f.id);
   setStorageDeselected(STORAGE_FOLDER_DESELECTED, all, () => {
     folderDeselectedRef = [...all];
-    renderFolderRows(cachedFolders, folderDeselectedRef);
+    renderFolderRows(cachedFolders, folderDeselectedRef, cachedFolderBookmarkCounts);
   });
 });
 
