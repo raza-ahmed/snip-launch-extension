@@ -5,12 +5,15 @@
   <title>SnipLaunch</title>
 </head>
 <body>
-  <h2>SnipLaunch</h2>
+  <div class="popup-header">
+    <h2>Snip Launch</h2>
+    <span id="bookmarkCount" class="bookmark-count">0</span>
+  </div>
 
   <div class="row row-top">
     <section class="section section-bookmarks">
       <div class="section-head">
-        <h3 class="section-title">Domains</h3>
+        <h3 class="section-title">Domains <span id="domainCount" class="section-count">(0)</span></h3>
         <div class="section-actions">
           <button id="domainSelectAll" type="button" class="btn-small">All</button>
           <button id="domainSelectNone" type="button" class="btn-small">None</button>
@@ -21,7 +24,7 @@
 
     <section class="section section-bookmarks">
       <div class="section-head">
-        <h3 class="section-title">Folders</h3>
+        <h3 class="section-title">Folders <span id="folderCount" class="section-count">(0)</span></h3>
         <div class="section-actions">
           <button id="folderSelectAll" type="button" class="btn-small">All</button>
           <button id="folderSelectNone" type="button" class="btn-small">None</button>

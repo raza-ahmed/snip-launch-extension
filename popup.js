@@ -4,8 +4,11 @@ const STORAGE_OPEN_COUNT = "openRandomTabCount";
 
 const domainList = document.getElementById("domainList");
 const bookmarkFolderList = document.getElementById("bookmarkFolderList");
+const bookmarkCount = document.getElementById("bookmarkCount");
 const openCountInput = document.getElementById("openCount");
 const openRandom = document.getElementById("openRandom");
+const domainCount = document.getElementById("domainCount");
+const folderCount = document.getElementById("folderCount");
 const domainSelectAll = document.getElementById("domainSelectAll");
 const domainSelectNone = document.getElementById("domainSelectNone");
 const folderSelectAll = document.getElementById("folderSelectAll");
@@ -179,8 +182,11 @@ let folderDeselectedRef = [];
 async function refreshBookmarks() {
   try {
     const { urls, folders } = await loadBookmarkTree();
+    bookmarkCount.textContent = String(urls.length);
     cachedDomains = uniqueDomainsFromUrls(urls);
     cachedFolders = folders;
+    domainCount.textContent = `(${cachedDomains.length})`;
+    folderCount.textContent = `(${cachedFolders.length})`;
 
     const folderIds = folders.map((f) => f.id);
 
@@ -193,6 +199,9 @@ async function refreshBookmarks() {
       renderFolderRows(folders, folderDeselectedRef);
     });
   } catch (e) {
+    bookmarkCount.textContent = "0";
+    domainCount.textContent = "(0)";
+    folderCount.textContent = "(0)";
     domainList.replaceChildren();
     bookmarkFolderList.replaceChildren();
     const msg = document.createElement("div");
