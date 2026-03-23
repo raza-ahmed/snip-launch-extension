@@ -1,10 +1,10 @@
 body {
-  width: 360px;
+  width: 480px;
   max-height: 600px;
   overflow-y: auto;
   font-family: Arial, sans-serif;
   background: #121212;
-  color: #eee;
+  color: #bcbcbc;
   padding: 10px;
   box-sizing: border-box;
 }
@@ -18,11 +18,59 @@ h2 {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #2a2a2a;
+  border-radius: 6px;
 }
 
-.section:last-of-type {
+.row {
+  display: flex;
+  gap: 16px;
+}
+
+.row-top {
+  align-items: flex-start;
+}
+
+.row-bottom {
+  align-items: flex-end;
+}
+
+.row-top .section,
+.row-bottom .section {
+  width: calc(50% - 10px);
+  padding-bottom: 0;
+  margin-top: 12px;
+}
+
+.row-top .section {
   border-bottom: none;
   margin-bottom: 0;
+}
+
+.row-bottom .section {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.section-open-action {
+  padding-bottom: 0;
+}
+
+.section-open,
+.section-open-action {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.section-open input[type="number"],
+.section-open-action button {
+  margin-bottom: 0;
+}
+
+input[type="number"] {
+  background: #1a1a1a;
+  color: #ddd;
+  border: 1px solid #333;
 }
 
 .label {
